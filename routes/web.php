@@ -195,7 +195,7 @@ Route::prefix('dashboard')->middleware('auth')->group(function () {
     Route::get('DetalleGasto/create', [detalle_gasto_comunController::class, 'create'])->name('detalle_gasto_comun.create');
     Route::post('DetalleGasto', [detalle_gasto_comunController::class, 'store'])->name('detalle_gasto_comun.store');
     Route::get('DetalleGasto/{detalle}/edit', [detalle_gasto_comunController::class, 'edit'])->name('detalle_gasto_comun.edit');
-    Route::post('DetalleGasto/{detalle}', [detalle_gasto_comunController::class, 'update'])->name('detalle_gasto_comun.update');
+    Route::post('DetalleGasto/{detalle}', [detalle_gasto_comunController::class, 'update'])->name('detalle_gasto_comun.update_post');
 
 
     Route::delete('DetalleGasto/{detalle}', [detalle_gasto_comunController::class, 'destroy'])->name('detalle_gasto_comun.destroy');
