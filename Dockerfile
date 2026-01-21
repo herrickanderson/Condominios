@@ -8,7 +8,8 @@ RUN composer install \
     --no-interaction \
     --prefer-dist \
     --ignore-platform-reqs \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-scripts
 
 # --- Stage 2: Build Frontend Assets (Node.js) ---
 FROM node:20 as frontend
