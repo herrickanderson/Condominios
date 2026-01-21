@@ -198,7 +198,7 @@ Route::prefix('dashboard')->middleware('auth')->group(function () {
     Route::post('DetalleGasto/{detalle}', [detalle_gasto_comunController::class, 'update'])->name('detalle_gasto_comun.update_post');
 
 
-    Route::delete('DetalleGasto/{detalle}', [detalle_gasto_comunController::class, 'destroy'])->name('detalle_gasto_comun.destroy');
+    Route::delete('DetalleGasto/{detalle}', [detalle_gasto_comunController::class, 'destroy'])->name('detalle_gasto_comun.destroy_alt');
 
 
     // Rutas para Distribución de Gastos
