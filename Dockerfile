@@ -1,14 +1,28 @@
-# --- Stage 1: Build Frontend Assets (Node.js) ---
+# --- Stage 1: Build Vendor (Composer) ---
+FROM composer:2 as vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+# Instalar dependencias para tener la carpeta vendor (necesaria para Ziggy)
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --ignore-platform-reqs \
+    --optimize-autoloader
+
+# --- Stage 2: Build Frontend Assets (Node.js) ---
 FROM node:20 as frontend
 WORKDIR /app
 COPY package*.json vite.config.js ./
 RUN npm install
 COPY resources ./resources
 COPY public ./public
-# Construir los assets (CSS/JS) para producción
+# Truco: Copiar la carpeta vendor de Ziggy para que Vite la encuentre
+COPY --from=vendor /app/vendor/tightenco/ziggy ./vendor/tightenco/ziggy
+# Construir los assets
 RUN npm run build
 
-# --- Stage 2: Build Backend (PHP) ---
+# --- Stage 3: Build Backend (PHP) ---
 FROM php:8.2-fpm
 
 # Instalar dependencias del sistema
@@ -28,37 +42,26 @@ RUN apt-get update && apt-get install -y \
 # Instalar extensiones PHP
 RUN docker-php-ext-install pdo pdo_pgsql pgsql mbstring exif pcntl bcmath gd
 
-# Instalar Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
 # Establecer directorio de trabajo
 WORKDIR /var/www/html
 
-# Copiar archivos del proyecto (Backend)
+# Copiar archivos del proyecto
 COPY . .
 
-# Copiar los assets compilados del Stage 1 (Frontend)
+# Copiar carpetas generadas de los stages anteriores
+COPY --from=vendor /app/vendor /var/www/html/vendor
 COPY --from=frontend /app/public/build /var/www/html/public/build
-
-# Instalar dependencias de PHP
-RUN composer install --no-dev --optimize-autoloader
 
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Copiar configuración de nginx
+# Copiar configuraciones
 COPY docker/nginx.conf /etc/nginx/sites-available/default
-
-# Copiar configuración de supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Copiar script de entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Exponer puerto (Render usa la variable PORT)
 EXPOSE 10000
 
-# Usar el script como comando de inicio
 CMD ["/usr/local/bin/docker-entrypoint.sh"]
